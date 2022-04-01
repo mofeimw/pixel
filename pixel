@@ -6,8 +6,7 @@ clear_screen() {
 }
 
 status_line_clean() {
-    clear
-    printf '\e[s\e[%b;H\e[J\e[u' "$((LINES-3))"
+    printf '\e[s\e[%b;H\e[J\e[u' "$((LINES - 2))"
 }
 
 get_term_size() {
@@ -38,16 +37,16 @@ status_line() {
     hud="${hud//\[/[\\e[1m}"
     
     printf '\e[s\e[;H\e[2K\e[%s;H<\e[m%b\e[m>%b\e[%s;H\e[99999D\e[A%b\e[u' \
-           "$((LINES-1))" \
+           "$((LINES - 1))" \
            "${print_col}\e[1m${brush_char:=█}" \
            "${hud//\]/\\e[m\]}" \
-           "$((LINES-1))" \
+           "$((LINES - 1))" \
            "${padding}${status//▃/ }\\n${padding}${status}"
 }
 
 save_file() {
     local IFS=
-    printf '\e[2J\e[2;H%b\e[m\e[%s;H' "${hist[*]}" "$((LINES-3))"
+    printf '\e[2J\e[2;H%b\e[m\e[%s;H' "${hist[*]}" "$((LINES - 3))"
 }
 
 load_file() {
@@ -92,7 +91,7 @@ paint() {
 }
 
 prompt() {
-    printf '\e[s\e[%s;H\e[m' "$((LINES-2))"
+    printf '\e[s\e[%s;H\e[m' "$((LINES - 2))"
 
     case "$1" in
         s) read -rp "save file: " f; save_file > "${f:-/dev/null}" ;;
@@ -111,13 +110,13 @@ prompt() {
 cursor() {
     case "${1: -1}" in
         A) get_pos; ((y>1))         && printf '\e[A' ;;
-        B) get_pos; ((y<LINES-3))   && printf '\e[B' ;;
-        C) get_pos; ((x<COLUMNS-1)) && printf '\e[C' ;;
+        B) get_pos; ((y<LINES - 3))   && printf '\e[B' ;;
+        C) get_pos; ((x<COLUMNS - 1)) && printf '\e[C' ;;
         D) printf '\e[D' ;;
 
         k) get_pos; ((y>1))         && printf '\e[A\e[A' ;;
-        j) get_pos; ((y<LINES-3))   && printf '\e[B\e[B' ;;
-        l) get_pos; ((x<COLUMNS-1)) && printf '\e[C\e[C\e[C\e[C' ;;
+        j) get_pos; ((y<LINES - 3))   && printf '\e[B\e[B' ;;
+        l) get_pos; ((x<COLUMNS - 1)) && printf '\e[C\e[C\e[C\e[C' ;;
         h) printf '\e[D\e[D\e[D\e[D' ;;
 
         H)   printf '\e[999999D' ;;
