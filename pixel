@@ -97,7 +97,8 @@ prompt() {
         s) read -rp "save file: " f; save_file > "${f:-/dev/null}" ;;
         o) read -rp "load file: " f; [[ -f "$f" ]] && load_file "$f" ;;
         c) read -rp "color: " color ;;
-        b) if [ -z "$(pbpaste)" ] || [ "$(pbpaste)" = " " ]; then read -rp "enter a character: " brush_char; else brush_char="$(pbpaste)"; fi ;;
+        b|i) read -rp "brush: " brush_char ;;
+        p) if [ -z "$(pbpaste)" ] || [ "$(pbpaste)" = " " ]; then read -rp "brush: " brush_char; else brush_char="$(pbpaste)"; fi ;;
         w) read -n 1 -rp "wipe? [y/n]: " y; [[ "$y" == y ]] && clear_screen ;;
         q) read -n 1 -rp "quit? [y/n]: " y; [[ "$y" == y ]] && exit ;;
     esac
@@ -109,14 +110,14 @@ prompt() {
 
 cursor() {
     case "${1: -1}" in
-        A) get_pos; ((y>1))         && printf '\e[A' ;;
-        B) get_pos; ((y<LINES - 3))   && printf '\e[B' ;;
-        C) get_pos; ((x<COLUMNS - 1)) && printf '\e[C' ;;
+        A) get_pos; ((y > 1))         && printf '\e[A' ;;
+        B) get_pos; ((y < LINES - 3))   && printf '\e[B' ;;
+        C) get_pos; ((x < COLUMNS - 1)) && printf '\e[C' ;;
         D) printf '\e[D' ;;
 
-        k) get_pos; ((y>1))         && printf '\e[A\e[A' ;;
-        j) get_pos; ((y<LINES - 3))   && printf '\e[B\e[B' ;;
-        l) get_pos; ((x<COLUMNS - 1)) && printf '\e[C\e[C\e[C\e[C' ;;
+        k) get_pos; ((y > 1))         && printf '\e[A\e[A' ;;
+        j) get_pos; ((y < LINES - 3))   && printf '\e[B\e[B' ;;
+        l) get_pos; ((x < COLUMNS - 1)) && printf '\e[C\e[C\e[C\e[C' ;;
         h) printf '\e[D\e[D\e[D\e[D' ;;
 
         H)   printf '\e[999999D' ;;
@@ -126,10 +127,10 @@ cursor() {
 
         e|x) paint " " ;;
         d|"") print_color; paint "${brush_char:=█}" "$print_col" ;;
-        u) (("${#hist}">0))  && undo; status_line ;;
-        r) (("${#undos}">1)) && redo; status_line ;;
+        u) (("${#hist}" > 0))  && undo; status_line ;;
+        r) (("${#undos}" > 1)) && redo; status_line ;;
 
-        b|c|o|s|q|w) prompt "${1: -1}" ;;
+        b|c|i|o|s|q|p|w) prompt "${1: -1}" ;;
     esac
 }
 
