@@ -36,7 +36,7 @@ status_line() {
     hud="${hud::$COLUMNS}"
     hud="${hud//\[/[\\e[1m}"
     
-    printf '\e[s\e[;H\e[2K\e[%s;H<\e[m%b\e[m>%b\e[%s;H\e[99999D\e[A%b\e[u' \
+    printf '\e[s\e[;H\e[2K\e[%s;H\e[m<\e[m%b\e[m>%b\e[%s;H\e[99999D\e[A%b\e[u' \
            "$((LINES - 1))" \
            "${print_col}\e[1m${brush_char:=█}" \
            "${hud//\]/\\e[m\]}" \
