@@ -6,12 +6,14 @@ clear_screen() {
 }
 
 status_line_clean() {
+    clear
     printf '\e[s\e[%b;H\e[J\e[u' "$((LINES-3))"
 }
 
 get_term_size() {
     shopt -s checkwinsize; (:;:)
     [[ -z "${LINES:+$COLUMNS}" ]] && read -r LINES COLUMNS < <(stty size)
+    printf '\e[%s;%sH' $((LINES/2)) $((COLUMNS/2))
 }
 
 print_palette() {
@@ -30,15 +32,16 @@ status_line() {
     print_color
     print_palette
 
-    hud="[space bar] to draw; [e]rase, cle[a]r, [s]ave, [o]pen, [u]ndo, [r]edo, e[x]it"
+    hud=" [arrow keys|space] brush:[b] erase:[x] wipe:[w]"
+    [ $COLUMNS -gt 100 ] && hud+=" save:[s] open:[o] undo:[u] redo:[r] quit:[q] color:[1-8]"
     hud="${hud::$COLUMNS}"
     hud="${hud//\[/[\\e[1m}"
-
-    printf '\e[s\e[;H\e[2K\e[m%b\e[%s;H\e[m%b\e[m, %b\e[m\e[99999D\e[A%b\e[u' \
+    
+    printf '\e[s\e[;H\e[2K\e[%s;H<\e[m%b\e[m>%b\e[%s;H\e[99999D\e[A%b\e[u' \
+           "$((LINES-1))" \
+           "${print_col}\e[1m${brush_char:=█}" \
            "${hud//\]/\\e[m\]}" \
-           "$((LINES-2))" \
-           "[\\e[1mc\\e[m]olor: \\e[1m${print_col}${color}" \
-           "[\\e[1mb\\e[m]rush: \\e[1m${brush_char:=█}" \
+           "$((LINES-1))" \
            "${padding}${status//▃/ }\\n${padding}${status}"
 }
 
@@ -89,14 +92,15 @@ paint() {
 }
 
 prompt() {
-    printf '\e[s\e[%s;H\e[m' "$((LINES-1))"
+    printf '\e[s\e[%s;H\e[m' "$((LINES-2))"
 
     case "$1" in
         s) read -rp "save file: " f; save_file > "${f:-/dev/null}" ;;
         o) read -rp "load file: " f; [[ -f "$f" ]] && load_file "$f" ;;
         c) read -rp "color: " color ;;
         b) read -rp "enter a character: " brush_char ;;
-        a) read -n 1 -rp "clear? [y/n]: " y; [[ "$y" == y ]] && clear_screen ;;
+        w) read -n 1 -rp "wipe? [y/n]: " y; [[ "$y" == y ]] && clear_screen ;;
+        q) read -n 1 -rp "quit? [y/n]: " y; [[ "$y" == y ]] && exit ;;
     esac
 
     printf '\e[u'
@@ -106,22 +110,27 @@ prompt() {
 
 cursor() {
     case "${1: -1}" in
-        A|k) get_pos; ((y>2))         && printf '\e[A' ;;
-        B|j) get_pos; ((y<LINES-4))   && printf '\e[B' ;;
-        C|l) get_pos; ((x<COLUMNS-1)) && printf '\e[C' ;;
-        D|h) printf '\e[D' ;;
+        A) get_pos; ((y>1))         && printf '\e[A' ;;
+        B) get_pos; ((y<LINES-3))   && printf '\e[B' ;;
+        C) get_pos; ((x<COLUMNS-1)) && printf '\e[C' ;;
+        D) printf '\e[D' ;;
+
+        k) get_pos; ((y>1))         && printf '\e[A\e[A' ;;
+        j) get_pos; ((y<LINES-3))   && printf '\e[B\e[B' ;;
+        l) get_pos; ((x<COLUMNS-1)) && printf '\e[C\e[C\e[C\e[C' ;;
+        h) printf '\e[D\e[D\e[D\e[D' ;;
+
         H)   printf '\e[999999D' ;;
         L)   printf '\e[999999C\e[D' ;;
 
         [1-8]) color="${1: -1}"; status_line ;;
 
-        e) paint " " ;;
+        e|x) paint " " ;;
         d|"") print_color; paint "${brush_char:=█}" "$print_col" ;;
         u) (("${#hist}">0))  && undo; status_line ;;
         r) (("${#undos}">1)) && redo; status_line ;;
-        x) exit ;;
 
-        a|b|c|o|s) prompt "${1: -1}" ;;
+        b|c|o|s|q|w) prompt "${1: -1}" ;;
     esac
 }
 
